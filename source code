@@ -1,0 +1,281 @@
+#include <stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+struct Process{
+    int p_id;
+    int p_arrival;
+    int p_burst;
+};
+
+// First com first serve
+void FCFS(struct Process p[],int n){
+      char gantt_chart[1000];
+      for(int i=0;i<n-1;i++){
+          for(int j=0;j<n-i-1;j++){
+              if(p[j].p_arrival > p[j+1].p_arrival){
+                  struct Process temp = p[j];
+                  p[j] = p[j+1];
+                  p[j+1] = temp;
+              }
+          }
+      }
+      int curr_time = 0;
+      int remain = n;
+      int visited [n];
+      for(int i=0;i<n;i++){
+          visited[i] = 0;
+      }
+      int prev = 0;
+      while(remain > 0){
+          for(int i=0;i<n;i++){
+              if(visited[i]==0){
+                 if(p[i].p_arrival>curr_time){
+                     int d = p[i].p_arrival - curr_time;
+                     while(d>0){
+                      d--;
+                      gantt_chart[curr_time++] = '-';
+                     }
+                  }
+                  while(p[i].p_burst>0){
+                      p[i].p_burst --;
+                      gantt_chart[curr_time++] = p[i].p_id + '0'; 
+                      visited[i] = 1;
+                      prev = curr_time;
+                  }
+                  remain --;
+              }
+          }
+          
+      }
+      for(int i=0;i<curr_time;i++){
+          printf("%c",gantt_chart[i]);
+      }
+}
+
+// Round Robin
+int queue[100];
+int front = -1, rear = -1;
+void inQueue(int val){
+    if(front==-1 && rear==-1){
+        front = rear = 0;
+        queue[front] = val;
+    }
+    else{
+        queue[++rear] = val;
+    }
+}
+int deQueue(){
+     if(front==-1 && rear==-1){
+         return -1;
+     }
+     if(front==rear){
+         int val = queue[front];
+         front = rear = -1;
+         return val;
+     }
+     return queue[front++];
+}
+int isEmpty(){
+    return (front==-1 && rear==-1);
+}
+int min(int a,int b){
+    if(a<b) return a;
+    return b;
+}
+void RR(struct Process p[],int n){
+    int tq;
+    printf("Enter time quanta:");
+    scanf("%d",&tq);
+     for(int i=0;i<n-1;i++){
+          for(int j=0;j<n-i-1;j++){
+              if(p[j].p_arrival > p[j+1].p_arrival){
+                  struct Process temp = p[j];
+                  p[j] = p[j+1];
+                  p[j+1] = temp;
+              }
+          }
+      }
+      char gantt_chart[1000];
+      int curr_time = 0;
+      while(curr_time<p[0].p_arrival){
+          gantt_chart[curr_time++]='-';
+      }
+      int visited [n];
+      for(int i=0;i<n;i++){
+          visited[i] = 0;
+      }
+      inQueue(p[0].p_id);
+      int remain = n;
+      while(remain>0){
+          if(isEmpty()){
+              int found = 0;
+              for(int i=0;i<n;i++){
+                  if(p[i].p_arrival==curr_time && visited[p[i].p_id-1]==0){
+                    found = 1;
+                    inQueue(p[i].p_id);
+                  } 
+              } 
+              if(!found){
+                gantt_chart[curr_time++] = '-';
+              }
+              continue;
+          }
+          int curr = deQueue();
+          int b = p[curr-1].p_burst;
+          printf("%d %d %d\n",curr,curr_time,b);
+          for(int i=0;i<min(tq,b);i++){
+              for(int j=0;j<n;j++){
+                if(p[j].p_arrival==curr_time && visited[p[j].p_id-1]==0 && p[j].p_id!=curr){
+                    inQueue(p[j].p_id);
+                } 
+              }
+              gantt_chart[curr_time++] = curr+'0';
+              p[curr-1].p_burst--;
+          }
+          if(p[curr-1].p_burst<=0){
+              remain --;
+              visited[curr-1] = 1;
+          }
+          for(int i=0;i<n;i++){
+                if(p[i].p_arrival==curr_time && visited[p[i].p_id-1]==0 && p[i].p_id!=curr){
+                    inQueue(p[i].p_id);
+                } 
+           }
+           if(p[curr-1].p_burst>0){
+               inQueue(curr);
+           } 
+      }
+       for(int i=0;i<curr_time;i++){
+          printf("%c",gantt_chart[i]);
+      }    
+}
+//Shortest job first (Nonpreemptive)
+void SJF(struct Process p[],int n){
+
+      char gantt_chart[1000];
+      int curr_time = 0;
+      for(int i=0;i<n-1;i++){
+          for(int j=0;j<n-i-1;j++){
+              if(p[j].p_arrival > p[j+1].p_arrival || (p[j].p_burst > p[j+1].p_burst && p[j].p_arrival == p[j+1].p_arrival)) {
+                  struct Process temp = p[j];
+                  p[j] = p[j+1];
+                  p[j+1] = temp;
+              }
+          }
+      }
+      int visited [n];
+      for(int i=0;i<n;i++){
+          visited[i] = 0;
+      }
+      int remain = n;
+      int prev = 0;
+      while(remain > 0){
+         for(int i=0;i<n;i++){
+              if(visited[i]==0){
+                  visited[i] = 1;
+                  remain--;
+                  if(p[i].p_arrival > prev){
+                      int d = p[i].p_arrival - prev;
+                      while(d>0){
+                          d--;
+                          gantt_chart[curr_time++] = '-';
+                      }
+                  }
+                  while(p[i].p_burst>0){
+                       gantt_chart[curr_time++] = p[i].p_id + '0';
+                       p[i].p_burst --;
+                       prev = curr_time;
+                  }
+              }
+         }
+      }
+      for(int i=0;i<curr_time;i++){
+          printf("%c",gantt_chart[i]);
+      }   
+}
+void SRTF(struct Process p[],int n){
+      char gantt_chart[1000];
+      int curr_time = 0;
+      for(int i=0;i<n-1;i++){
+          for(int j=0;j<n-i-1;j++){
+              if(p[j].p_arrival > p[j+1].p_arrival || (p[j].p_burst > p[j+1].p_burst && p[j].p_arrival == p[j+1].p_arrival)) {
+                  struct Process temp = p[j];
+                  p[j] = p[j+1];
+                  p[j+1] = temp;
+              }
+          }
+      }
+      int visited [n];
+      for(int i=0;i<n;i++){
+          visited[i] = 0;
+      }
+      int remain = n;
+      int prev = 0;
+      while(remain > 0){
+          int idx = -1;
+          int mn = 1000000000;
+          for(int i=0;i<n;i++){
+              if(p[i].p_arrival<=curr_time && visited[p[i].p_id-1]==0){
+                  if(p[i].p_burst<mn){
+                      mn = p[i].p_burst;
+                      idx = p[i].p_id;
+                  }
+                  else if (p[i].p_burst==mn){
+                          if(p[i].p_arrival< p[idx].p_arrival){
+                              mn = p[i].p_burst;
+                              idx = i;
+                          }
+                      }
+              }
+          }
+          if(idx=-1){
+              p[idx].p_burst --;
+              gantt_chart[curr_time++]=p[idx].p_id + '0';
+              if(p[idx].p_burst==0){
+                  remain --;
+                  visited[idx] = 1;
+              }
+          }
+          else{
+              gantt_chart[curr_time++] = '-';
+          }
+      }
+       for(int i=0;i<curr_time;i++){
+          printf("%c",gantt_chart[i]);
+       } 
+}
+int main(){
+    FILE *fp  = fopen("input.txt","r");
+    int len = 0;
+    int read;
+    char * line = NULL;
+    struct Process p[10];
+    int cnt = 0;
+    //Taking input from file
+    while ((read = getline(&line, &len, fp)) != -1) {
+        int curr = 0;
+        int mode = 0;
+        char * token = strtok(line, " ");
+        while(token!=NULL){
+            if(curr==0){
+                curr=1;
+                p[cnt].p_id = atoi(token);
+            }
+            else if(curr==1){
+                curr=2;
+                p[cnt].p_arrival = atoi(token);
+            }
+            else{
+                p[cnt].p_burst = atoi(token);
+            }
+            token = strtok(NULL, " ");
+        }
+        cnt++;
+        
+    }
+    // SJF(p,cnt);
+    // SRTF(p,cnt);
+    // FCFS(p,cnt);
+    // RR(p,cnt);
+}
