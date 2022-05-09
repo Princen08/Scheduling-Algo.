@@ -221,20 +221,20 @@ void SRTF(struct Process p[],int n){
                       mn = p[i].p_burst;
                       idx = p[i].p_id;
                   }
-                  else if (p[i].p_burst==mn){
+                  else if (p[i].p_burst==mn && visited[p[i].p_id-1]==0){
                           if(p[i].p_arrival< p[idx].p_arrival){
                               mn = p[i].p_burst;
-                              idx = i;
+                              idx = p[i].p_id;
                           }
                       }
               }
           }
-          if(idx=-1){
-              p[idx].p_burst --;
-              gantt_chart[curr_time++]=p[idx].p_id + '0';
-              if(p[idx].p_burst==0){
+          if(idx!=-1){
+              p[idx-1].p_burst --;
+              gantt_chart[curr_time++]= idx + '0';
+              if(p[idx-1].p_burst==0){
                   remain --;
-                  visited[idx] = 1;
+                  visited[idx-1] = 1;
               }
           }
           else{
@@ -274,8 +274,8 @@ int main(){
         cnt++;
         
     }
-    // SJF(p,cnt);
     // SRTF(p,cnt);
+    // SJF(p,cnt);
     // FCFS(p,cnt);
     // RR(p,cnt);
 }
